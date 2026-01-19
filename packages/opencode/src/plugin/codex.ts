@@ -353,15 +353,30 @@ export async function CodexAuthPlugin(input: PluginInput): Promise<Hooks> {
         const auth = await getAuth()
         if (auth.type !== "oauth") return {}
 
-        // Filter models to only allowed Codex models for OAuth
-        const allowedModels = new Set(["gpt-5.1-codex-max", "gpt-5.1-codex-mini", "gpt-5.2", "gpt-5.2-codex"])
+        // Curated list of models confirmed to work with Codex OAuth
+        // Note: Many OpenAI models don't work with the Codex endpoint and will return
+        // "model is not supported" errors. This list contains only tested, working models.
+        //
+        // To customize this list without rebuilding, add to your opencode.json:
+        // {
+        //   "provider": {
+        //     "openai": {
+        //       "whitelist": ["gpt-5.2-codex", "gpt-5.2", "o1-mini", ...]
+        //     }
+        //   }
+        // }
+        const allowedModels = new Set([
+          "gpt-5.2-codex",
+          "gpt-5.2",
+        ])
+
         for (const modelId of Object.keys(provider.models)) {
           if (!allowedModels.has(modelId)) {
             delete provider.models[modelId]
           }
         }
 
-        // Zero out costs for Codex (included with ChatGPT subscription)
+        // Zero out costs for OAuth (included with ChatGPT subscription)
         for (const model of Object.values(provider.models)) {
           model.cost = {
             input: 0,
